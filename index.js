@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const admin = require("firebase-admin");
 const cors = require("cors");
 const app = express();
@@ -77,7 +77,15 @@ async function run() {
       res.send(result);
     });
 
-    
+    app.get("/properties-details/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const result = await allPropertyCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+
 
     await client.db("admin").command({ ping: 1 });
     console.log(
