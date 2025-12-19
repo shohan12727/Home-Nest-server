@@ -6,17 +6,17 @@ const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
 
-// firebase sdk 
+// firebase sdk
 
-const decoded = Buffer.from(process.env.FIREBASE_ADMIN_SDK_KEY, "base64").toString(
-  "utf-8"
-);
+const decoded = Buffer.from(
+  process.env.FIREBASE_ADMIN_SDK_KEY,
+  "base64"
+).toString("utf-8");
 const serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
-
 
 // middleware
 app.use(
@@ -45,16 +45,32 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
+    const myDb = client.db("homeNest");
+    const allPropertyCollection = myDb.collection("allProperty");
 
+    const verifyJWT = async (req, res, next) => {
+      const token = req?.headers?.authorization?.split(" ")[1];
+      if (!token)
+        return res.status(401).send({ message: "Unauthorized Access!" });
+      try {
+        const decoded = await admin.auth().verifyIdToken(token);
+        req.tokenEmail = decoded.email;
 
+        next();
+      } catch (err) {
+        console.log(err);
+        return res.status(401).send({ message: "Unauthorized Access!", err });
+      }
+    };
 
+    // PROPERTY RELATED API
 
-
-
-
-
-
- 
+    app.post("/properties", verifyJWT, async (req, res) => {
+      const propertyData = req.body;
+      propertyData.createdAt = new Date().toISOString();
+      const result = await allPropertyCollection.insertOne(propertyData);
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
