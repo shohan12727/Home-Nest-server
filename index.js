@@ -1,9 +1,22 @@
 require("dotenv").config();
 const express = require("express");
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const admin = require("firebase-admin");
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
+
+// firebase sdk 
+
+const decoded = Buffer.from(process.env.FIREBASE_ADMIN_SDK_KEY, "base64").toString(
+  "utf-8"
+);
+const serviceAccount = JSON.parse(decoded);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 
 // middleware
 app.use(
@@ -33,7 +46,7 @@ async function run() {
     // await client.connect();
 
 
-    
+
 
 
 
