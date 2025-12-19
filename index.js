@@ -72,6 +72,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/properties", async (req, res) => {
+      const result = await allPropertyCollection.find().toArray();
+      res.send(result);
+    });
+
+    
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
