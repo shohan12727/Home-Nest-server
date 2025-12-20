@@ -86,6 +86,18 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/my-property", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        return res.status(400).send({ message: "Email query is required" });
+      }
+      const result = await allPropertyCollection
+        .find({ vendorEmail: email })
+        .toArray();
+
+      res.send(result);
+    });
+
     // REVIEW RELATED API
 
     app.post("/reviews", verifyJWT, async (req, res) => {
@@ -95,16 +107,16 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/reviews", async (req,res) => {
+    app.get("/reviews", async (req, res) => {
       const email = req.query.email;
-        if (!email) {
+      if (!email) {
         return res.status(400).send({ message: "Email query is required" });
       }
-      const result = await allReviewCollection.find({reviewerEmail: email}).toArray();
+      const result = await allReviewCollection
+        .find({ reviewerEmail: email })
+        .toArray();
       res.send(result);
-    })
-
-
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
