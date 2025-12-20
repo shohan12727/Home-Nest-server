@@ -47,6 +47,7 @@ async function run() {
 
     const myDb = client.db("homeNest");
     const allPropertyCollection = myDb.collection("allProperty");
+    const allReviewCollection = myDb.collection("allReview");
 
     const verifyJWT = async (req, res, next) => {
       const token = req?.headers?.authorization?.split(" ")[1];
@@ -85,7 +86,14 @@ async function run() {
       res.send(result);
     });
 
+    // REVIEW RELATED API
 
+    app.post("/reviews", verifyJWT, async (req, res) => {
+      const reviewData = req.body;
+      reviewData.createdAt = new Date().toISOString();
+      const result = await allReviewCollection.insertOne(reviewData);
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
