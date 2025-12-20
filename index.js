@@ -98,6 +98,79 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/properties/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await allPropertyCollection.deleteOne(query);
+      const result2  = await allReviewCollection.deleteMany({propertyId: id});
+      res.send(result, result2);
+    });
+    
+    app.patch("/properties/:id", verifyJWT, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const emailFromToken = req.tokenEmail;
+    const {
+      propertyName,
+      price,
+      image,
+      description,
+      category,
+      location,
+    } = req.body;
+
+    const property = await allPropertyCollection.findOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!property) {
+      return res.status(404).send({ message: "Property not found" });
+    }
+
+    if (property.vendorEmail !== emailFromToken) {
+      return res.status(403).send({ message: "Forbidden access" });
+    }
+    const propertyUpdateResult = await allPropertyCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          propertyName,
+          price,
+          image,
+          description,
+          category,
+          location,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    );
+
+    const reviewUpdateResult = await allReviewCollection.updateMany(
+      { propertyId: id },
+      {
+        $set: {
+          propertyName,
+          thumbnailOfProperty: image,
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    );
+    res.send({
+      propertyModified: propertyUpdateResult.modifiedCount,
+      reviewsModified: reviewUpdateResult.modifiedCount,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      message: "Failed to update property and reviews",
+    });
+  }
+});
+
+
+
+
+
     // REVIEW RELATED API
 
     app.post("/reviews", verifyJWT, async (req, res) => {
