@@ -79,8 +79,11 @@ async function run() {
     });
 
     app.get("/properties/featured", async (req, res) => {
-      const result = await allPropertyCollection.find().sort({ createdAt: -1 })
-      .limit(6).toArray();
+      const result = await allPropertyCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .toArray();
       res.send(result);
     });
 
@@ -108,74 +111,64 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await allPropertyCollection.deleteOne(query);
-      const result2  = await allReviewCollection.deleteMany({propertyId: id});
+      const result2 = await allReviewCollection.deleteMany({ propertyId: id });
       res.send(result, result2);
     });
-    
+
     app.patch("/properties/:id", verifyJWT, async (req, res) => {
-  try {
-    const id = req.params.id;
-    const emailFromToken = req.tokenEmail;
-    const {
-      propertyName,
-      price,
-      image,
-      description,
-      category,
-      location,
-    } = req.body;
+      try {
+        const id = req.params.id;
+        const emailFromToken = req.tokenEmail;
+        const { propertyName, price, image, description, category, location } =
+          req.body;
 
-    const property = await allPropertyCollection.findOne({
-      _id: new ObjectId(id),
-    });
+        const property = await allPropertyCollection.findOne({
+          _id: new ObjectId(id),
+        });
 
-    if (!property) {
-      return res.status(404).send({ message: "Property not found" });
-    }
+        if (!property) {
+          return res.status(404).send({ message: "Property not found" });
+        }
 
-    if (property.vendorEmail !== emailFromToken) {
-      return res.status(403).send({ message: "Forbidden access" });
-    }
-    const propertyUpdateResult = await allPropertyCollection.updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $set: {
-          propertyName,
-          price,
-          image,
-          description,
-          category,
-          location,
-          updatedAt: new Date().toISOString(),
-        },
+        if (property.vendorEmail !== emailFromToken) {
+          return res.status(403).send({ message: "Forbidden access" });
+        }
+        const propertyUpdateResult = await allPropertyCollection.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $set: {
+              propertyName,
+              price,
+              image,
+              description,
+              category,
+              location,
+              updatedAt: new Date().toISOString(),
+            },
+          }
+        );
+
+        const reviewUpdateResult = await allReviewCollection.updateMany(
+          { propertyId: id },
+          {
+            $set: {
+              propertyName,
+              thumbnailOfProperty: image,
+              updatedAt: new Date().toISOString(),
+            },
+          }
+        );
+        res.send({
+          propertyModified: propertyUpdateResult.modifiedCount,
+          reviewsModified: reviewUpdateResult.modifiedCount,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).send({
+          message: "Failed to update property and reviews",
+        });
       }
-    );
-
-    const reviewUpdateResult = await allReviewCollection.updateMany(
-      { propertyId: id },
-      {
-        $set: {
-          propertyName,
-          thumbnailOfProperty: image,
-          updatedAt: new Date().toISOString(),
-        },
-      }
-    );
-    res.send({
-      propertyModified: propertyUpdateResult.modifiedCount,
-      reviewsModified: reviewUpdateResult.modifiedCount,
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({
-      message: "Failed to update property and reviews",
-    });
-  }
-});
-
-
-
-
 
     // REVIEW RELATED API
 
@@ -196,6 +189,17 @@ async function run() {
         .toArray();
       res.send(result);
     });
+
+    app.get("/reviews/:propertyId", async (req, res) => {
+      const propertyId = req.params.propertyId;
+      const result = await allReviewCollection
+        .find({ propertyId: propertyId })
+        .toArray();
+      res.send(result);
+    });
+
+
+
 
     await client.db("admin").command({ ping: 1 });
     console.log(
