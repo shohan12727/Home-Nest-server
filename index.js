@@ -78,6 +78,12 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/properties/featured", async (req, res) => {
+      const result = await allPropertyCollection.find().sort({ createdAt: -1 })
+      .limit(6).toArray();
+      res.send(result);
+    });
+
     app.get("/properties-details/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const result = await allPropertyCollection.findOne({
