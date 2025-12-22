@@ -21,7 +21,11 @@ admin.initializeApp({
 // middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://home-nest-7e180.web.app",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -74,7 +78,10 @@ async function run() {
     });
 
     app.get("/properties", async (req, res) => {
-      const result = await allPropertyCollection.find().toArray();
+      const result = await allPropertyCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .toArray();
       res.send(result);
     });
 
@@ -198,10 +205,7 @@ async function run() {
       res.send(result);
     });
 
-
-
-
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
